@@ -1,0 +1,21 @@
+# Tells Render how to run My Day. Render reads this file when you create a "Blueprint".
+services:
+  - type: web
+    name: my-day
+    runtime: python
+    plan: free
+    region: frankfurt # closest Render region to West Africa
+    buildCommand: pip install -r requirements.txt
+    startCommand: uvicorn backend.main:app --host 0.0.0.0 --port $PORT
+    healthCheckPath: /api/info
+    envVars:
+      - key: PYTHON_VERSION
+        value: "3.14"
+      - key: TZ # so note times match your clock (West Central Africa, UTC+1)
+        value: Africa/Lagos
+      - key: DATABASE_URL # Render asks you to paste your Supabase "Session pooler" connection string
+        sync: false
+      - key: APP_PASSWORD # Render asks you to choose the password for the app
+        sync: false
+      - key: SESSION_SECRET
+        generateValue: true
