@@ -15,7 +15,3 @@ services:
         value: Africa/Lagos
       - key: DATABASE_URL # Render asks you to paste your Supabase "Session pooler" connection string
         sync: false
-      - key: APP_PASSWORD # Render asks you to choose the password for the app
-        sync: false
-      - key: SESSION_SECRET
-        generateValue: true

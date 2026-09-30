@@ -5,13 +5,8 @@ Then open http://localhost:8000
 
 Settings come from environment variables (all optional on your PC):
   DATABASE_URL    PostgreSQL connection string. If empty, the local todo.db file is used.
-  APP_PASSWORD    Password needed to open the app. If empty, no login is asked.
-  SESSION_SECRET  Random text used to sign the login cookie.
 """
-import asyncio
 import csv
-import hashlib
-import hmac
 import html
 import io
 import os
@@ -25,7 +20,7 @@ from pathlib import Path
 from typing import Optional
 
 from fastapi import FastAPI, HTTPException, Request
-from fastapi.responses import FileResponse, JSONResponse, Response
+from fastapi.responses import FileResponse, Response
 from fastapi.staticfiles import StaticFiles
 from pydantic import BaseModel
 
@@ -36,10 +31,6 @@ FRONTEND_DIR = BASE_DIR / "frontend"
 
 DATABASE_URL = os.environ.get("DATABASE_URL", "").strip()
 USE_POSTGRES = DATABASE_URL.startswith(("postgres://", "postgresql://"))
-APP_PASSWORD = os.environ.get("APP_PASSWORD", "")
-SESSION_SECRET = os.environ.get("SESSION_SECRET") or secrets.token_hex(32)
-SESSION_COOKIE = "myday_session"
-SESSION_DAYS = 90
 
 MAX_PRIORITIES = 3
 BACKUPS_TO_KEEP = 14
@@ -282,68 +273,16 @@ class CarryOverIn(BaseModel):
     to_day: str
 
 
-class LoginIn(BaseModel):
-    password: str
-
-
 app = FastAPI(title="Daily Todo")
 init_db()
 daily_auto_backup()
 
 
-# ---------- Login ----------
-
-def session_token() -> str:
-    # Changing APP_PASSWORD automatically logs everyone out
-    return hmac.new(SESSION_SECRET.encode(), APP_PASSWORD.encode(), hashlib.sha256).hexdigest()
-
-
-def is_logged_in(request: Request) -> bool:
-    if not APP_PASSWORD:
-        return True
-    return hmac.compare_digest(request.cookies.get(SESSION_COOKIE, ""), session_token())
-
-
-@app.middleware("http")
-async def require_login(request: Request, call_next):
-    path = request.url.path
-    if path.startswith("/api/") and path not in ("/api/login", "/api/info") and not is_logged_in(request):
-        return JSONResponse({"detail": "Please log in"}, status_code=401)
-    return await call_next(request)
-
+# ---------- App info ----------
 
 @app.get("/api/info")
-def info(request: Request):
-    return {
-        "login_required": bool(APP_PASSWORD),
-        "logged_in": is_logged_in(request),
-        "online": USE_POSTGRES,
-    }
-
-
-@app.post("/api/login")
-async def login(body: LoginIn, request: Request):
-    if not APP_PASSWORD or not hmac.compare_digest(body.password.encode(), APP_PASSWORD.encode()):
-        await asyncio.sleep(1)  # slows down password guessing
-        raise HTTPException(401, "Wrong password")
-    response = JSONResponse({"ok": True})
-    https = request.headers.get("x-forwarded-proto", request.url.scheme) == "https"
-    response.set_cookie(
-        SESSION_COOKIE,
-        session_token(),
-        max_age=SESSION_DAYS * 24 * 3600,
-        httponly=True,
-        samesite="lax",
-        secure=https,
-    )
-    return response
-
-
-@app.post("/api/logout")
-def logout():
-    response = JSONResponse({"ok": True})
-    response.delete_cookie(SESSION_COOKIE)
-    return response
+def info():
+    return {"online": USE_POSTGRES}
 
 
 # ---------- Todos ----------

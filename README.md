@@ -16,8 +16,8 @@ The app's address is http://localhost:8000. Reminders only pop up while that pag
 
 ## Putting it online
 
-See **DEPLOY.md** for step-by-step instructions (Render + Supabase). Online, the app asks for a password
-and stores its data in PostgreSQL instead of `todo.db`.
+See **DEPLOY.md** for step-by-step instructions (Render + Supabase). Online, the app stores its data in
+PostgreSQL instead of `todo.db`. There is no password: anyone with the web address can open it.
 
 ## Features
 

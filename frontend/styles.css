@@ -87,7 +87,7 @@ h2 { margin: 0 0 12px; font-size: 17px; }
 .link-btn.danger { color: var(--muted); }
 .link-btn.danger:hover { color: var(--danger); }
 
-input[type="text"], input:not([type]), input[type="time"], input[type="password"], textarea {
+input[type="text"], input:not([type]), input[type="time"], textarea {
   width: 100%; font: inherit; color: var(--text); background: var(--bg);
   border: 1px solid var(--border); border-radius: 8px; padding: 8px 10px;
 }
@@ -273,11 +273,8 @@ code { font-size: 13px; background: var(--accent-soft); padding: 1px 5px; border
 .rich p { margin: 0 0 6px; }
 .rich > :first-child { margin-top: 0; }
 
-/* Login */
-.login-page { min-height: 100vh; display: flex; align-items: center; justify-content: center; padding: 16px; }
-.login-card { width: 100%; max-width: 360px; display: grid; gap: 12px; text-align: center; }
-.login-card p { margin: 0; }
-.login-error { color: var(--danger); font-size: 14px; }
+/* Loading / error screen */
+.status-page { min-height: 100vh; display: flex; align-items: center; justify-content: center; padding: 16px; }
 
 /* Backup */
 .backup { margin-top: 14px; }

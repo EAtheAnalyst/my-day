@@ -36,10 +36,6 @@ async function api(path, options = {}) {
     ...options,
     body: options.body ? JSON.stringify(options.body) : undefined,
   });
-  if (res.status === 401 && path !== "/login") {
-    // Logged out (e.g. password changed): reloading shows the login screen
-    window.location.reload();
-  }
   if (!res.ok) {
     let message = `Something went wrong (${res.status})`;
     try { message = (await res.json()).detail || message; } catch {}
@@ -662,20 +658,6 @@ function SettingsModal({ info, settings, onSave, onTest, onClose }) {
         {perm === "default" && <button className="btn" onClick={enableNotifications}>Turn on</button>}
       </div>
       <BackupSection online={info.online} />
-      {info.login_required && (
-        <div className="setting-row">
-          <span>You're logged in.</span>
-          <button
-            className="btn"
-            onClick={async () => {
-              await api("/logout", { method: "POST" });
-              window.location.reload();
-            }}
-          >
-            Log out
-          </button>
-        </div>
-      )}
       <div className="modal-footer">
         <button className="btn" onClick={onClose}>Cancel</button>
         <button className="btn primary" onClick={() => onSave(form)}>Save</button>
@@ -713,47 +695,6 @@ function HistoryModal({ onPick, onClose }) {
 
 // ---------- App ----------
 
-function LoginScreen({ onLogin }) {
-  const [password, setPassword] = useState("");
-  const [error, setError] = useState("");
-  const [busy, setBusy] = useState(false);
-
-  const submit = async (e) => {
-    e.preventDefault();
-    setBusy(true);
-    setError("");
-    try {
-      await api("/login", { method: "POST", body: { password } });
-      onLogin();
-    } catch (err) {
-      setError(err.message);
-      setBusy(false);
-    }
-  };
-
-  return (
-    <div className="login-page">
-      <form className="card login-card" onSubmit={submit}>
-        <h1>My Day</h1>
-        <p className="muted">Enter your password to open your to-do list.</p>
-        <input
-          type="password"
-          value={password}
-          onChange={(e) => setPassword(e.target.value)}
-          placeholder="Password"
-          aria-label="Password"
-          autoComplete="current-password"
-          autoFocus
-        />
-        {error && <p className="login-error">{error}</p>}
-        <button type="submit" className="btn primary" disabled={busy || !password}>
-          {busy ? "Checking…" : "Log in"}
-        </button>
-      </form>
-    </div>
-  );
-}
-
 function Root() {
   const [info, setInfo] = useState(null);
   const [error, setError] = useState("");
@@ -762,11 +703,8 @@ function Root() {
     api("/info").then(setInfo).catch(() => setError("Can't reach the app. It may be waking up — try refreshing in a minute."));
   }, []);
 
-  if (error) return <div className="login-page"><p className="muted">{error}</p></div>;
-  if (!info) return <div className="login-page"><p className="muted">Loading…</p></div>;
-  if (info.login_required && !info.logged_in) {
-    return <LoginScreen onLogin={() => setInfo({ ...info, logged_in: true })} />;
-  }
+  if (error) return <div className="status-page"><p className="muted">{error}</p></div>;
+  if (!info) return <div className="status-page"><p className="muted">Loading…</p></div>;
   return <App info={info} />;
 }
 
